@@ -92,9 +92,8 @@ import toxi.processing.*;
 ToxiclibsSupport gfx;
 
 import javax.swing.UIManager; 
-import javax.swing.JFileChooser; 
-
-
+import javax.swing.JFileChooser;
+import java.util.List;
 
 
 // Feel free to play with these three default settings:
@@ -159,7 +158,7 @@ boolean VoronoiCalculated;
 
 // Toxic libs library setup:
 Voronoi voronoi; 
-Polygon2D RegionList[];
+List<Polygon2D> RegionList;
 
 PolygonClipper2D clip;  // polygon clipper
 
@@ -302,7 +301,7 @@ void MainArraysetup() {
 } 
 
 boolean sketchFullScreen() {
-  return true;
+  return false;
 }
 
 void setup()
@@ -310,8 +309,8 @@ void setup()
 
   borderWidth = 6;
 
-  mainwidth = displayWidth;
-  mainheight = displayHeight-110;
+  mainwidth = displayWidth/2;
+  mainheight = displayHeight/2-110;
   ctrlheight = 110;
 
   size(mainwidth, mainheight + ctrlheight, JAVA2D);
@@ -673,7 +672,7 @@ void White_Cutoff(float inValue) {
 
 void  DoBackgrounds() {
   if (showBG)
-    image(img, 0, 0);    // Show original (cropped and scaled, but not blurred!) image in background
+    image(imgblur, 0, 0);    // Show original (cropped and scaled, but not blurred!) image in background
   else { 
 
     if (invertImg)
@@ -880,7 +879,7 @@ void doPhysics()
     if (vorPointsAdded == 0)
       voronoi = new Voronoi();  // Erase mesh
 
-    temp = vorPointsAdded + 20;   // This line: VoronoiPointsPerPass  (Feel free to edit this number.)
+    temp = vorPointsAdded + maxParticles/5;   // This line: VoronoiPointsPerPass  (Feel free to edit this number.)
     if (temp > maxParticles) 
       temp = maxParticles; 
 
@@ -894,17 +893,18 @@ void doPhysics()
 
       //    println("Points added.  Time = " + (millis() - millisBaseline) );
 
-      cellsTotal =  (voronoi.getRegions().size());
+      RegionList = voronoi.getRegions();
+      cellsTotal =  (RegionList.size());
       vorPointsAdded = 0;
       cellsCalculated = 0;
       cellsCalculatedLast = 0;
 
-      RegionList = new Polygon2D[cellsTotal];
+ //     RegionList = new Polygon2D[cellsTotal];
 
-      int i = 0;
-      for (Polygon2D poly : voronoi.getRegions()) {
-        RegionList[i++] = poly;  // Build array of polygons
-      }
+//      int i = 0;
+//      for (Polygon2D poly : voronoi.getRegions()) {
+//        RegionList[i++] = poly;  // Build array of polygons
+//      }
       VoronoiCalculated = true;
     }
   }
@@ -916,7 +916,7 @@ void doPhysics()
     StatusDisplay = "Calculating weighted centroids"; 
 
 
-    temp = cellsCalculated + 100;   // This line: CentroidsPerPass  (Feel free to edit this number.)
+    temp = cellsCalculated + cellsTotal/5;   // This line: CentroidsPerPass  (Feel free to edit this number.)
     // Higher values give slightly faster computation, but a less responsive GUI.
 
 
@@ -933,8 +933,7 @@ void doPhysics()
       float yMin = mainheight;
       float xt, yt;
 
-      Polygon2D region = clip.clipPolygon(RegionList[i]);
-
+      Polygon2D region = clip.clipPolygon(RegionList.get(i));
 
       for (Vec2D v : region.vertices) { 
 
@@ -963,8 +962,8 @@ void doPhysics()
 
       while (maxSize > cellBuffer)
       {
-        scaleFactor *= 0.5;
-        maxSize *= 0.5;
+        scaleFactor /= 2;
+        maxSize /=2 ;
       }
 
       while (maxSize < (cellBuffer/2))
